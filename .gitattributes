@@ -1,0 +1,10 @@
+# Normalize line endings so Windows (Git Bash) and Linux CI agree
+* text=auto
+
+# Shell scripts must stay LF or they break on Linux runners
+*.sh  text eol=lf
+mvnw  text eol=lf
+
+# Windows scripts stay CRLF
+*.cmd text eol=crlf
+*.bat text eol=crlf

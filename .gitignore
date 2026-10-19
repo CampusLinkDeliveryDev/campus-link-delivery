@@ -23,14 +23,19 @@
 hs_err_pid*
 replay_pid*
 
-# IntelliJ IDEA
-.idea/
-*.iml
+# Root-level ignores only. backend/ and frontend/ have their own .gitignore files.
 
-# Maven build output
-target/
-
-# Local environment files
+# Environment / secrets (Supabase credentials, API keys)
 .env
 .env.*
 !.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.iml
