@@ -42,6 +42,11 @@ export default function LoginPage(){
             <button type="submit">Log In</button>
 
             {error && <p>{error}</p>}
+
+            <p>
+                No account?
+                <button type="button" onClick={onShowSignup}>Create account</button>
+            </p>
         </form>
     )
 }

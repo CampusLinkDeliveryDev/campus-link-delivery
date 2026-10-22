@@ -2,9 +2,11 @@ import {useState, useEffect} from 'react'
 import {supabase} from './lib/supabase'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
+import SignupPage from './pages/SignupPage'
 
 export default function App(){
   const [session, setSession] = useState(null)
+  const [showSignup, setShowSignup] = useState(false)
 
 
   useEffect(() => {
@@ -20,5 +22,10 @@ export default function App(){
     return () => data.subscription.unsubscribe()
   }, [])
 
-  return session ? <HomePage session={session}/> : <LoginPage />
+  if (session) return <HomePage session={session}/>
+
+  return showSignup ? <SignupPage onShowLogin={() => setShowSignup(false)}/> 
+  : <LoginPage onShowSignup={() => setShowSignup(true)}/>
+
+  
 }
