@@ -118,9 +118,13 @@ while the existing schema is being reviewed.
 
 
 
-Authentication, role permissions, CORS, security headers,
+Access token checks, role checks and local CORS settings are in place.
 
-row-level security and application endpoints are still pending.
+Spring Security's default security headers are enabled.
+
+Business endpoints are still pending. RLS is being handled in Supabase
+
+by the database developer.
 
 
 
@@ -130,3 +134,86 @@ Maven ignores repositories introduced by dependencies through
 
 be configured explicitly.
 
+
+## Backend security
+
+Supabase handles sign-in and creates access tokens. The backend checks
+
+each token before allowing access to protected endpoints.
+
+### Token checks
+
+Requests must include this header:
+
+    Authorization: Bearer <access-token>
+
+The backend checks the token's signature, issuer, audience and expiry.
+
+It accepts ES256 tokens signed by our Supabase project.
+
+### Roles
+
+The backend reads the user's role from the profiles table.
+
+The supported roles are Customer, Courier and Admin.
+
+Users without a profile receive no role permissions.
+
+### Test endpoints
+
+- GET /api/security/test requires a valid token and returns the user's
+  role permissions.
+
+- GET /api/security/test/admin also requires the Admin role.
+
+### Local settings
+
+Add these settings to backend/.env:
+
+    SUPABASE_JWT_ISSUER=https://YOUR_PROJECT_REF.supabase.co/auth/v1
+
+    SUPABASE_JWKS_URL=https://YOUR_PROJECT_REF.supabase.co/auth/v1/.well-known/jwks.json
+
+    CORS_ALLOWED_ORIGINS=http://localhost:5173
+
+Replace YOUR_PROJECT_REF with your Supabase project reference.
+
+Keep passwords and access tokens out of Git.
+
+CORS_ALLOWED_ORIGINS lists the frontend addresses allowed to call the
+
+API from a browser. Production addresses still need to be configured.
+
+### Testing
+
+Run from the backend folder:
+
+    ./mvnw verify
+
+All 17 tests passed. Automated security tests use a simulated token
+
+decoder. We also tested real Supabase tokens in Postman.
+
+Manual checks confirmed:
+
+- Valid tokens allow access.
+
+- Missing, invalid and expired tokens return 401.
+
+- The Customer role is read from the database.
+
+- Customers receive 403 on the Admin test endpoint.
+
+- Allowed and blocked origins receive the expected CORS responses.
+
+
+
+### Remaining work
+
+- Add business endpoints and their role permissions.
+
+- Check production CORS and HTTPS settings.
+
+- Verify how the backend database connection works with the RLS
+
+  policies being handled by the database developer.
