@@ -42,7 +42,7 @@ export default function SignupPage({onShowLogin}){
             setMessage('Account created. An admin needs to approve couriers before you can deliver')
         } else if (!data.session){
             //Email confirmatiuon is on, no session until they click the link
-            setMessage('Check your email to confirm yor account')
+            setMessage('Check your email to confirm your account')
         }
 
         //When link clicked they can see the session data
