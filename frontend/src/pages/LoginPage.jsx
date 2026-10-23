@@ -2,7 +2,7 @@ import {useState} from 'react'
 import {supabase} from '../lib/supabase'
 
 
-export default function LoginPage(){
+export default function LoginPage({onShowSignup}){
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
@@ -42,6 +42,11 @@ export default function LoginPage(){
             <button type="submit">Log In</button>
 
             {error && <p>{error}</p>}
+
+            <p>
+                No account?
+                <button type="button" onClick={onShowSignup}>Create account</button>
+            </p>
         </form>
     )
 }
