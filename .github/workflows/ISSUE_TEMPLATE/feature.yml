@@ -1,0 +1,32 @@
+name: Feature
+description: A piece of work for the app
+labels: ["feature"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Frontend, Backend, Database & Auth, DevOps, Docs]
+    validations:
+      required: true
+  - type: input
+    id: requirement
+    attributes:
+      label: Requirement IDs
+      placeholder: "FR-05, NFR-04"
+  - type: textarea
+    id: what
+    attributes:
+      label: What and why
+      placeholder: What should this do, and who is it for?
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] 
+        - [ ] Tests added
+    validations:
+      required: true
