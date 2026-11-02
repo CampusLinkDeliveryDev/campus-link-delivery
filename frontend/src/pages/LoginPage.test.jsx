@@ -1,6 +1,7 @@
 import {fireEvent, render, screen} from '@testing-library/react'
 import {expect, test, vi} from 'vitest'
 import LoginPage from './LoginPage'
+import {MemoryRouter} from 'react-router-dom' 
 
 //Fake supabase so tests dont hit production database
 vi.mock('../lib/supabase', ()=> ({
@@ -12,7 +13,7 @@ vi.mock('../lib/supabase', ()=> ({
 }))
 
 test('shows an error when login fails', async () => {
-    render (<LoginPage/>)
+    render (<LoginPage/>, {wrapper: MemoryRouter})
 
     fireEvent.change(screen.getByPlaceholderText('email'), {target: {value: 'testacc@test.com'}})
     fireEvent.change(screen.getByPlaceholderText('password'), {target : {value: 'wrongPassword'}})

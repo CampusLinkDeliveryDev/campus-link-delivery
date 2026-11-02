@@ -2,6 +2,7 @@ import {cleanup, fireEvent, render, screen } from '@testing-library/react'
 import {afterEach, expect, test, vi} from 'vitest'
 import {supabase} from '../lib/supabase'
 import SignupPage from './SignupPage'
+import {MemoryRouter} from 'react-router-dom'
 
 
 vi.mock('../lib/supabase',() => ({
@@ -24,7 +25,7 @@ function fillForm(email){
 
 
 test('rejects emails that are not @rdpolytech.ca', async () => {
-    render(<SignupPage/>)
+    render(<SignupPage/>, {wrapper: MemoryRouter})
 
     fillForm('testuser@gmail.com')
     expect(await screen.findByText('Use your @rdpolytech.ca email')).toBeTruthy()
@@ -33,7 +34,7 @@ test('rejects emails that are not @rdpolytech.ca', async () => {
 
 
 test('sends the signup details and asks the user to confirm their email', async () => {
-    render(<SignupPage/>)
+    render(<SignupPage/>, {wrapper: MemoryRouter})
 
     fillForm('student@rdpolytech.ca')
     expect(await screen.findByText('Check your email to confirm your account')).toBeTruthy()
