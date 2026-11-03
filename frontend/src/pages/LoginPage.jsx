@@ -1,8 +1,9 @@
 import {useState} from 'react'
 import {supabase} from '../lib/supabase'
+import {Link} from 'react-router-dom'
 
 
-export default function LoginPage({onShowSignup}){
+export default function LoginPage(){
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
@@ -45,7 +46,7 @@ export default function LoginPage({onShowSignup}){
 
             <p>
                 No account?
-                <button type="button" onClick={onShowSignup}>Create account</button>
+                <Link to="/signup">Create Account</Link>
             </p>
         </form>
     )

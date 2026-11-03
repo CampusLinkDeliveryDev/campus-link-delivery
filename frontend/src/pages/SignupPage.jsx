@@ -1,9 +1,10 @@
 import {useState} from 'react'
 import {supabase} from '../lib/supabase'
+import {Link} from 'react-router-dom'
 
 
 const Phone_Regex = /^\+?[0-9 ()-]{7,20}$/
-export default function SignupPage({onShowLogin}){
+export default function SignupPage(){
     const [fullName, setFullName] = useState('')
     const [email, setEmail] = useState('')
     const [phone, setPhone] = useState('')
@@ -98,7 +99,7 @@ export default function SignupPage({onShowLogin}){
 
             <p>
                 Already have an account? 
-                <button type="button" onClick={onShowLogin}>Log in</button>
+                <Link to="/login">Log In</Link>
             </p>
 
         </form>
