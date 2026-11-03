@@ -45,6 +45,10 @@ export default function LoginPage(){
             {error && <p>{error}</p>}
 
             <p>
+                <Link to="/forgot-password">Forgot password</Link>
+            </p>
+
+            <p>
                 No account?
                 <Link to="/signup">Create Account</Link>
             </p>

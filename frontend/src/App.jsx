@@ -3,6 +3,8 @@ import {supabase} from './lib/supabase'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import SignupPage from './pages/SignupPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import {Navigate, Route, Routes} from 'react-router-dom'
 
 export default function App(){
@@ -32,7 +34,12 @@ export default function App(){
     <Routes>
       <Route path="/login" element={session ? <Navigate to="/" replace /> : <LoginPage/>}/>
 
-      <Route path="/signup" element={session ? <Navigate to="/" replace/> : <SignupPage/>}/> 
+      <Route path="/signup" element={session ? <Navigate to="/" replace/> : <SignupPage/>}/>
+
+      <Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
+
+      //Opened from the reset email, which logs in with a short lived session
+      <Route path="/reset-password" element={<ResetPasswordPage session={session}/>}/> 
 
 
       // Only logged in users can see the home page

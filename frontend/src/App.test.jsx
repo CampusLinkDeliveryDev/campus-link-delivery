@@ -43,3 +43,8 @@ test('logged in users are redirected to home page', async () => {
     renderAt('/login')
     expect(await screen.findByText('Logged in as student@rdpolytech.ca')).toBeTruthy()
 })
+
+test('the forgot password page is reachable while logged out', async () => {
+    renderAt('/forgot-password')
+    expect(await screen.findByRole('heading', {name: 'Forgot Password'})).toBeTruthy()
+})
