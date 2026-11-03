@@ -15,6 +15,8 @@ vi.mock('./lib/supabase', () => ({
     },
 }))
 
+vi.mock('./lib/api', () => ({ apiFetch: vi.fn().mockResolvedValue('ok') }))
+
 afterEach(cleanup)
 
 function renderAt(url){
