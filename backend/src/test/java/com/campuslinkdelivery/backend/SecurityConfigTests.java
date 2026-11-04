@@ -31,10 +31,17 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.mockito.Mockito.mock;
 
+import com.campuslinkdelivery.backend.controller.ProfileController;
+import com.campuslinkdelivery.backend.model.AccountStatus;
+
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+
 
 
 @WebMvcTest(
-        controllers = SecurityTestController.class,
+        controllers = {SecurityTestController.class, ProfileController.class},
         properties = {
                 "spring.config.import=",
                 "app.cors.allowed-origins=http://localhost:5173",
@@ -180,5 +187,32 @@ class SecurityConfigTests {
                 .andExpect(header().string(
                         "Cache-Control",
                         "no-cache, no-store, max-age=0, must-revalidate"));
+    }
+
+    @Test
+    void suspendedUserCannotReadOrUpdateOwnProfile() throws Exception {
+        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+
+        Jwt jwt = Jwt.withTokenValue("suspended-user-token")
+                .header("alg", "ES256")
+                .subject(userId.toString())
+                .build();
+
+        Profile profile = mock(Profile.class);
+        when(profile.getRole()).thenReturn(Role.CUSTOMER);
+        when(profile.getAccountStatus()).thenReturn(AccountStatus.suspended);
+        when(profileRepository.findById(userId)).thenReturn(Optional.of(profile));
+        when(jwtDecoder.decode("suspended-user-token")).thenReturn(jwt);
+
+        mockMvc.perform(put("/api/me")
+                        .header("Authorization", "Bearer suspended-user-token")
+                        .contentType("application/json")
+                        .content("""
+                        {"full_name": "Blocked Update", "phone": "4035550100"}
+                        """))
+                .andExpect(status().isForbidden());
+
+        verify(profileRepository, never())
+                .updateContactDetails(userId, "Blocked Update", "4035550100");
     }
 }
