@@ -27,6 +27,24 @@ public class Profile {
     @Column(name = "role", nullable = false, columnDefinition = "public.user_role")
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "account_status", nullable = false,
+            columnDefinition = "public.account_status")
+    private AccountStatus accountStatus;
+
+    @Column(name = "full_name", nullable = false)
+    private String fullName;
+
+    @Column(name = "email", nullable = false)
+    private String email;
+
+    @Column(name = "phone")
+    private String phone;
+
+    @Column(name = "is_available", nullable = false)
+    private boolean available;
+
     protected Profile() {
     }
 
@@ -36,5 +54,25 @@ public class Profile {
 
     public Role getRole() {
         return role;
+    }
+
+    public AccountStatus getAccountStatus() {
+        return accountStatus;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public boolean isAvailable() {
+        return available;
     }
 }
