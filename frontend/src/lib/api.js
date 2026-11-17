@@ -23,7 +23,11 @@ export async function apiFetch(path, options = {}){
     }
 
     if (!response.ok) {
-        throw new Error(`Request failed (${response.status})`)
+
+        //keep status so pages know specific errors, for eg: suspended account
+        const error = new Error(`Request failed (${response.status})`)
+        error.status = response.status
+        throw error
     }
 
     //backend may answer with json or plain text
