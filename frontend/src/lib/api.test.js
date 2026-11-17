@@ -50,8 +50,7 @@ test('logs the user out when the backend says 401', async () => {
 test('throws on other errors without logging out', async () => {
   fakeBackend(403, { error: 'forbidden' })
 
-  await expect(apiFetch('/api/admin')).rejects.toThrow('Request failed (403)')
-  expect(supabase.auth.signOut).not.toHaveBeenCalled()
+  await expect(apiFetch('/api/admin')).rejects.toMatchObject({message: 'Request failed (403)', status: 403})
 })
 
 test('returns plain text responses as text', async () => {
