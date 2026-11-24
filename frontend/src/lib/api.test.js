@@ -14,7 +14,7 @@ vi.mock('./supabase', () => ({
 
 
 //Pretend to be backend: every call returns this response
-function fakeBackend(status, body, type='applicaiton/json'){
+function fakeBackend(status, body, type='application/json'){
     const fetchMock = vi.fn().mockResolvedValue(
         new Response(type.includes('json') ? JSON.stringify(body) : body, {
             status,
@@ -38,6 +38,20 @@ test('sends the Supabase token as a bearer header', async () => {
     expect(result).toEqual({role: 'customer'})
     const [, options] = fetchMock.mock.calls[0]
     expect(options.headers.Authorization).toBe('Bearer test-token')
+})
+
+// JSON responses can include a charset alongside the content type.
+test('parses JSON responses with a charset', async () => {
+    const profile = {
+        role: 'CUSTOMER',
+        account_status: 'active'
+    }
+
+    // The fake response uses the same header format a backend may send.
+    fakeBackend(200, profile, 'application/json; charset=utf-8')
+
+    // The response should become an object rather than remain a JSON string.
+    expect(await apiFetch('/api/me')).toEqual(profile)
 })
 
 test('logs the user out when the backend says 401', async () => {
