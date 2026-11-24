@@ -17,6 +17,11 @@ import org.springframework.security.web.SecurityFilterChain;
 import com.campuslinkdelivery.backend.repo.ProfileRepository;
 import com.campuslinkdelivery.backend.security.ProfileJwtAuthenticationConverter;
 
+import static org.springframework.security.authorization.AuthorizationManagers.allOf;
+import static org.springframework.security.authorization.AuthorizationManagers.anyOf;
+import static org.springframework.security.authorization.AuthorityAuthorizationManager.hasAuthority;
+import static org.springframework.security.authorization.AuthorityAuthorizationManager.hasRole;
+
 @Configuration
 public class SecurityConfig {
 
@@ -31,8 +36,24 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/api/security/test/admin").hasRole("ADMIN")
-                        .anyRequest().authenticated())
+                        .requestMatchers("/api/me").access(anyOf(
+                                hasAuthority("STATUS_active"),
+                                allOf(
+                                        hasRole("COURIER"),
+                                        hasAuthority("STATUS_pending_approval"))))
+                        .requestMatchers("/api/customer/**", "/api/security/test/customer")
+                        .access(allOf(
+                                hasRole("CUSTOMER"),
+                                hasAuthority("STATUS_active")))
+                        .requestMatchers("/api/courier/**", "/api/security/test/courier")
+                        .access(allOf(
+                                hasRole("COURIER"),
+                                hasAuthority("STATUS_active")))
+                        .requestMatchers("/api/admin/**", "/api/security/test/admin")
+                        .access(allOf(
+                                hasRole("ADMIN"),
+                                hasAuthority("STATUS_active")))
+                        .anyRequest().hasAuthority("STATUS_active"))
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(
                                 new ProfileJwtAuthenticationConverter(profileRepository))));

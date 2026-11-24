@@ -25,6 +25,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.campuslinkdelivery.backend.model.AccountStatus;
 @ExtendWith(MockitoExtension.class)
 class ProfileJwtAuthenticationConverterTests {
 
@@ -46,6 +47,7 @@ class ProfileJwtAuthenticationConverterTests {
     void profileRoleBecomesMatchingAuthority(Role role) {
         Profile profile = mock(Profile.class);
         when(profile.getRole()).thenReturn(role);
+        when(profile.getAccountStatus()).thenReturn(AccountStatus.active);
         when(profileRepository.findById(USER_ID))
                 .thenReturn(Optional.of(profile));
 
@@ -55,7 +57,29 @@ class ProfileJwtAuthenticationConverterTests {
         assertTrue(authentication.isAuthenticated());
         assertEquals(USER_ID.toString(), authentication.getName());
         assertEquals(
-                List.of("ROLE_" + role.name()),
+                List.of("ROLE_" + role.name(), "STATUS_active"),
+                authentication.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .toList()
+        );
+
+        verify(profileRepository).findById(USER_ID);
+    }
+
+    @ParameterizedTest
+    @EnumSource(AccountStatus.class)
+    void profileStatusBecomesMatchingAuthority(AccountStatus status) {
+        Profile profile = mock(Profile.class);
+        when(profile.getRole()).thenReturn(Role.COURIER);
+        when(profile.getAccountStatus()).thenReturn(status);
+        when(profileRepository.findById(USER_ID))
+                .thenReturn(Optional.of(profile));
+
+        var authentication = converter.convert(createJwt(USER_ID.toString()));
+
+        assertNotNull(authentication);
+        assertEquals(
+                List.of("ROLE_COURIER", "STATUS_" + status.name()),
                 authentication.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .toList()
