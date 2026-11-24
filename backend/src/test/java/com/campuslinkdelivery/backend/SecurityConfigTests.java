@@ -1,10 +1,20 @@
 package com.campuslinkdelivery.backend;
 
 import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 
 import com.campuslinkdelivery.backend.config.SecurityConfig;
+import com.campuslinkdelivery.backend.controller.ProfileController;
 import com.campuslinkdelivery.backend.controller.SecurityTestController;
+import com.campuslinkdelivery.backend.model.AccountStatus;
+import com.campuslinkdelivery.backend.model.Profile;
+import com.campuslinkdelivery.backend.repo.ProfileRepository;
+import com.campuslinkdelivery.backend.security.Role;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -14,34 +24,15 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.campuslinkdelivery.backend.repo.ProfileRepository;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import com.campuslinkdelivery.backend.model.Profile;
-import com.campuslinkdelivery.backend.security.Role;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
-
-import static org.mockito.Mockito.mock;
-
-import com.campuslinkdelivery.backend.controller.ProfileController;
-import com.campuslinkdelivery.backend.model.AccountStatus;
-
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-
-
-
 @WebMvcTest(
-        controllers = {SecurityTestController.class, ProfileController.class},
+        controllers = {
+                SecurityTestController.class,
+                ProfileController.class
+        },
         properties = {
                 "spring.config.import=",
                 "app.cors.allowed-origins=http://localhost:5173",
@@ -51,6 +42,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 )
 @Import(SecurityConfig.class)
 class SecurityConfigTests {
+
+    private static final UUID USER_ID =
+            UUID.fromString("00000000-0000-0000-0000-000000000001");
 
     @Autowired
     private MockMvc mockMvc;
@@ -79,19 +73,10 @@ class SecurityConfigTests {
 
     @Test
     void acceptedTokenAllowsRequest() throws Exception {
-        Instant now = Instant.now();
-
-        Jwt jwt = Jwt.withTokenValue("accepted-token")
-                .header("alg", "ES256")
-                .subject("00000000-0000-0000-0000-000000000001")
-                .issuedAt(now)
-                .expiresAt(now.plusSeconds(300))
-                .build();
-
-        when(jwtDecoder.decode("accepted-token")).thenReturn(jwt);
+        acceptTokenWithRole(Role.CUSTOMER);
 
         mockMvc.perform(get("/api/security/test")
-                        .header("Authorization", "Bearer accepted-token"))
+                        .header("Authorization", "Bearer role-test-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message")
                         .value("Authentication successful"))
@@ -151,31 +136,6 @@ class SecurityConfigTests {
                 .andExpect(status().isForbidden());
     }
 
-    private void acceptTokenWithRole(Role role) {
-        UUID userId =
-                UUID.fromString("00000000-0000-0000-0000-000000000001");
-        Instant now = Instant.now();
-
-        Jwt jwt = Jwt.withTokenValue("role-test-token")
-                .header("alg", "ES256")
-                .subject(userId.toString())
-                .issuedAt(now)
-                .expiresAt(now.plusSeconds(300))
-                .build();
-
-        when(jwtDecoder.decode("role-test-token")).thenReturn(jwt);
-
-        if (role == null) {
-            when(profileRepository.findById(userId))
-                    .thenReturn(Optional.empty());
-        } else {
-            Profile profile = mock(Profile.class);
-            when(profile.getRole()).thenReturn(role);
-            when(profileRepository.findById(userId))
-                    .thenReturn(Optional.of(profile));
-        }
-    }
-
     @Test
     void protectedResponseIncludesSecurityHeaders() throws Exception {
         mockMvc.perform(get("/api/security/test"))
@@ -191,28 +151,128 @@ class SecurityConfigTests {
 
     @Test
     void suspendedUserCannotReadOrUpdateOwnProfile() throws Exception {
-        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        acceptTokenWithRoleAndStatus(
+                Role.CUSTOMER, AccountStatus.suspended);
 
-        Jwt jwt = Jwt.withTokenValue("suspended-user-token")
-                .header("alg", "ES256")
-                .subject(userId.toString())
-                .build();
-
-        Profile profile = mock(Profile.class);
-        when(profile.getRole()).thenReturn(Role.CUSTOMER);
-        when(profile.getAccountStatus()).thenReturn(AccountStatus.suspended);
-        when(profileRepository.findById(userId)).thenReturn(Optional.of(profile));
-        when(jwtDecoder.decode("suspended-user-token")).thenReturn(jwt);
-
-        mockMvc.perform(put("/api/me")
-                        .header("Authorization", "Bearer suspended-user-token")
-                        .contentType("application/json")
-                        .content("""
-                        {"full_name": "Blocked Update", "phone": "4035550100"}
-                        """))
+        mockMvc.perform(get("/api/me")
+                        .header("Authorization", "Bearer role-test-token"))
                 .andExpect(status().isForbidden());
 
-        verify(profileRepository, never())
-                .updateContactDetails(userId, "Blocked Update", "4035550100");
+        mockMvc.perform(put("/api/me")
+                        .header("Authorization", "Bearer role-test-token")
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "full_name": "Blocked Update",
+                                  "phone": "4035550100"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+
+        verify(profileRepository, never()).updateContactDetails(
+                USER_ID, "Blocked Update", "4035550100");
+    }
+
+    @ParameterizedTest
+    @EnumSource(Role.class)
+    void activeRoleCanOnlyAccessItsOwnEndpoint(Role role) throws Exception {
+        acceptTokenWithRole(role);
+
+        String[] endpoints = {
+                "/api/security/test/customer",
+                "/api/security/test/courier",
+                "/api/security/test/admin"
+        };
+
+        Role[] requiredRoles = {
+                Role.CUSTOMER,
+                Role.COURIER,
+                Role.ADMIN
+        };
+
+        for (int i = 0; i < endpoints.length; i++) {
+            int expectedStatus = role == requiredRoles[i] ? 200 : 403;
+
+            mockMvc.perform(get(endpoints[i])
+                            .header("Authorization", "Bearer role-test-token"))
+                    .andExpect(status().is(expectedStatus));
+        }
+    }
+
+    @Test
+    void pendingCourierCanOnlyAccessOwnProfile() throws Exception {
+        acceptTokenWithRoleAndStatus(
+                Role.COURIER, AccountStatus.pending_approval);
+
+        mockMvc.perform(get("/api/me")
+                        .header("Authorization", "Bearer role-test-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.account_status")
+                        .value("pending_approval"));
+
+        String[] blockedEndpoints = {
+                "/api/security/test",
+                "/api/security/test/customer",
+                "/api/security/test/courier",
+                "/api/security/test/admin"
+        };
+
+        for (String endpoint : blockedEndpoints) {
+            mockMvc.perform(get(endpoint)
+                            .header("Authorization", "Bearer role-test-token"))
+                    .andExpect(status().isForbidden());
+        }
+    }
+
+    @ParameterizedTest
+    @EnumSource(Role.class)
+    void suspendedRoleCannotAccessProtectedEndpoints(Role role) throws Exception {
+        acceptTokenWithRoleAndStatus(role, AccountStatus.suspended);
+
+        String[] blockedEndpoints = {
+                "/api/me",
+                "/api/security/test",
+                "/api/security/test/customer",
+                "/api/security/test/courier",
+                "/api/security/test/admin"
+        };
+
+        for (String endpoint : blockedEndpoints) {
+            mockMvc.perform(get(endpoint)
+                            .header("Authorization", "Bearer role-test-token"))
+                    .andExpect(status().isForbidden());
+        }
+    }
+
+    // Existing role tests use an active account.
+    private void acceptTokenWithRole(Role role) {
+        acceptTokenWithRoleAndStatus(role, AccountStatus.active);
+    }
+
+    // The decoder and repository return test data without contacting Supabase.
+    private void acceptTokenWithRoleAndStatus(
+            Role role, AccountStatus accountStatus) {
+
+        Instant now = Instant.now();
+
+        Jwt jwt = Jwt.withTokenValue("role-test-token")
+                .header("alg", "ES256")
+                .subject(USER_ID.toString())
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(300))
+                .build();
+
+        when(jwtDecoder.decode("role-test-token")).thenReturn(jwt);
+
+        if (role == null) {
+            when(profileRepository.findById(USER_ID))
+                    .thenReturn(Optional.empty());
+        } else {
+            Profile profile = mock(Profile.class);
+            when(profile.getRole()).thenReturn(role);
+            when(profile.getAccountStatus()).thenReturn(accountStatus);
+            when(profileRepository.findById(USER_ID))
+                    .thenReturn(Optional.of(profile));
+        }
     }
 }

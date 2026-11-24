@@ -25,4 +25,14 @@ public class SecurityTestController {
     public Map<String, String> testAdminAccess() {
         return Map.of("message", "Admin access successful");
     }
+
+    @GetMapping("/api/security/test/customer")
+    public Map<String, String> testCustomerAccess() {
+        return Map.of("message", "Customer access successful");
+    }
+
+    @GetMapping("/api/security/test/courier")
+    public Map<String, String> testCourierAccess() {
+        return Map.of("message", "Courier access successful");
+    }
 }

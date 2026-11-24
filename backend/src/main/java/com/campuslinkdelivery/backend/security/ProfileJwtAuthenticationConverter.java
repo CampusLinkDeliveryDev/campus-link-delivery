@@ -29,7 +29,9 @@ public class ProfileJwtAuthenticationConverter
         List<GrantedAuthority> authorities = profileRepository.findById(userId)
                 .map(profile -> List.<GrantedAuthority>of(
                         new SimpleGrantedAuthority(
-                                "ROLE_" + profile.getRole().name())))
+                                "ROLE_" + profile.getRole().name()),
+                        new SimpleGrantedAuthority(
+                                "STATUS_" + profile.getAccountStatus().name())))
                 .orElseGet(List::of);
 
         return new JwtAuthenticationToken(jwt, authorities, jwt.getSubject());
