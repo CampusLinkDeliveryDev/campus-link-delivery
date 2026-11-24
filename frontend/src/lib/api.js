@@ -32,5 +32,5 @@ export async function apiFetch(path, options = {}){
 
     //backend may answer with json or plain text
     const type = response.headers.get('content-type')?? ''
-    return type.includes('applicaiton/json') ? response.json(): response.text()
+    return type.includes('application/json') ? response.json(): response.text()
 }
